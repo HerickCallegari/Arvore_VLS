@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1711497255 source:c:\users\zenop\onedrive\Área de trabalho\coisas do c\arvores\arvores_avl\arvore_avl_teste\main.c
+	<stdio.h>
+	<stdlib.h>
+	"Arvore_AVL.h"
+
+1711497169 c:\users\zenop\onedrive\Área de trabalho\coisas do c\arvores\arvores_avl\arvore_avl_teste\arvore_avl.h
+	"utils.h"
+
+1711495541 c:\users\zenop\onedrive\Área de trabalho\coisas do c\arvores\arvores_avl\arvore_avl_teste\utils.h
+
