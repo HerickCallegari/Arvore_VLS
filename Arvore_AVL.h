@@ -1,4 +1,6 @@
 #include "utils.h"
+
+#define ESPACO 5
 // ############################### STRUCT ###############################
 typedef struct NohArvoreAVL NohArvore;
 typedef NohArvore* pNohArvore;
@@ -96,7 +98,6 @@ pNohArvore insertNohRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp)
 
     // verificação de propriedade
     raiz->FB = FBNoh(raiz);
-    //BalancearArvore(raiz);
 return Balance(raiz);
 
 }
@@ -108,27 +109,86 @@ void insertNoh ( pDescArvore arvore, void* info, FuncaoComparacao fcp) {
 //------------------------------- print ---------------------------------------------
 
 void imprimeArvoreRecursivo( pNohArvore raiz, FuncaoImpressao fip) {
-    if ( raiz != NULL) {
+    if ( raiz != NULL)
         fip(raiz->info);
 
-        printf(" FB: %d", raiz->FB);
-    }
-
     if ( raiz->direita != NULL) {
-        printf("\nDireita: ");
+        printf(", ");
 
         imprimeArvoreRecursivo(raiz->direita, fip);
     }
     if ( raiz->esquerda != NULL) {
-        printf("\nEsquerda: ");
+        printf(", ");
         imprimeArvoreRecursivo(raiz->esquerda, fip);
     }
 }
 
 void imprimeArvore( pDescArvore arvore, FuncaoImpressao fip) {
-    printf("\nRaiz principal: ");
+    printf("\nArvore: ");
     imprimeArvoreRecursivo(arvore->raiz, fip);
 }
+
+void desenhaArvoreRecursivo(pNohArvore raiz, int depth, char *path, int right, FuncaoImpressao fi) {
+
+    if (raiz == NULL)
+        return;
+
+    depth++;
+
+    desenhaArvoreRecursivo(raiz->direita, depth, path, 1, fi);
+
+    path[depth-2] = 0;
+
+    if(right)
+        path[depth-2] = 1;
+
+    if(raiz->esquerda)
+        path[depth-1] = 1;
+
+    printf("\n");
+    int i;
+    for(i=0; i<depth-1; i++)
+    {
+      if(i == depth-2)
+          printf("+");
+      else if(path[i])
+          printf("|");
+      else
+          printf(" ");
+
+      int j;
+      for(j=1; j<ESPACO; j++)
+      if(i < depth-2)
+          printf(" ");
+      else
+          printf("-");
+    }
+
+    fi(raiz->info);
+    printf("[%d]", raiz->FB);
+
+    for(i=0; i<depth; i++)
+    {
+      if(path[i])
+          printf(" ");
+      else
+          printf(" ");
+
+      int j;
+      for(j=1; j<ESPACO; j++)
+          printf(" ");
+    }
+
+    desenhaArvoreRecursivo(raiz->esquerda, depth, path, 0, fi);
+}
+
+void desenhaArvore(pDescArvore arvore, FuncaoImpressao fi) {
+    char path[255] = {};
+
+    desenhaArvoreRecursivo(arvore->raiz, 0, path, 0, fi);
+    printf("\n");
+}
+
 
 //--------------------------- heigth --------------------------------
 int alturaNoh ( pNohArvore raiz) {
@@ -165,11 +225,17 @@ int FBNoh ( pNohArvore raiz ) {
 //-------------------------- Balance ---------------------------------
 
 pNohArvore Balance(pNohArvore raiz) {
-    if ( raiz->FB > 1) {
+    if ( raiz->FB == 2 && raiz->direita->FB == -1) { // Rotacao dupla Esquerda
+        raiz->esquerda = LeftRotate(raiz->esquerda);
+        return RightRotate(raiz);
+    } else if(raiz->FB == -2 && raiz->esquerda->FB == 1) { // Rotacao dupla Direita
+        raiz->direita = RightRotate(raiz->direita);
+        return LeftRotate(raiz);
+    } else if ( raiz->FB > 1 ) { // Rotacao direita
         return LeftRotate (raiz);
-    } else if ( raiz->FB < -1 ){
+    } else if ( raiz->FB < -1 ){ // Rotacao esquerda
        return RightRotate(raiz);
-    } else {
+    } else { // esta balanceado
         return raiz;
     }
 }
@@ -203,3 +269,59 @@ pNohArvore LeftRotate(pNohArvore raiz) {
     u->FB = FBNoh(raiz);
     return u;
 }
+
+//-------------------------- FindBy ---------------------------------
+pNohArvore proxLeaf(pNohArvore raiz, void* info, FuncaoComparacao fcp) {
+    if (raiz == NULL) {
+            printf("raiz é nula");
+        return NULL;
+    }
+
+    if ( raiz->direita != NULL && fcp(raiz->info, info) < 0) {
+            return raiz->direita;
+    }
+
+    if ( raiz->esquerda != NULL && fcp( raiz->info, info ) > 0) {
+            return raiz->esquerda;
+
+    }
+
+    return NULL;
+}
+
+
+pNohArvore findByRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp) {
+    if (raiz == NULL) {
+        return NULL; // Se raiz for nulo, não há mais nó para procurar
+    }
+
+    // Verifica se a raiz atual corresponde ao valor buscado
+    if (fcp(raiz->info, info) == 0) {
+        return raiz;
+    }
+
+    pNohArvore prox = proxLeaf(raiz, info, fcp);
+
+    return findByRecursivo(prox, info, fcp);
+
+}
+
+
+
+pNohArvore findBy(pDescArvore arvore, void* info, FuncaoComparacao fcp) {
+    return findByRecursivo(arvore->raiz, info, fcp);;
+}
+
+
+
+//---------------------- isLeaf ---------------------------------------
+
+int isLeaf(pNohArvore raiz) {
+    if ( raiz->direita == NULL && raiz->esquerda == NULL ) {
+    return 1;
+    }else {
+    return 0;
+    }
+}
+
+
