@@ -25,6 +25,38 @@ typedef int (*FuncaoComparacao) ( void*, void*);
 
 typedef void (*FuncaoImpressao) ( void* );
 
+pDescArvore criarArvore();
+
+pNohArvore RightRotate(pNohArvore raiz);
+
+pNohArvore LeftRotate(pNohArvore raiz);
+
+int FBNoh(pNohArvore raiz);
+
+pNohArvore Balance(pNohArvore raiz);
+
+pNohArvore insertNohRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp);
+
+void insertNoh ( pDescArvore arvore, void* info, FuncaoComparacao fcp);
+
+void imprimeArvoreRecursivo( pNohArvore raiz, FuncaoImpressao fip);
+
+void imprimeArvore( pDescArvore arvore, FuncaoImpressao fip);
+
+int alturaNoh ( pNohArvore raiz);
+
+int alturaArvore ( pDescArvore arvore);
+
+int FBNoh ( pNohArvore raiz );
+
+pNohArvore Balance(pNohArvore raiz);
+
+pNohArvore RightRotate(pNohArvore raiz);
+
+pNohArvore LeftRotate(pNohArvore raiz);
+
+pNohArvore LeftRotate(pNohArvore raiz);
+
 // ############################### implementações ###############################
 
 //------------------------------- Instaciar -------------------------------------------
@@ -39,6 +71,8 @@ pDescArvore criarArvore() {
 //------------------------------- Insert ---------------------------------------------
 
 pNohArvore insertNohRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp) {
+
+    // Estrutura de inserção
     if (raiz == NULL) {
             //para teste
             printf("\nincluiu");
@@ -51,17 +85,20 @@ pNohArvore insertNohRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp)
     }
     else if ( fcp ( info, raiz->info ) > 0) {
             //para teste
-            printf("\ndireita");
+            //printf("\ndireita");
         raiz->direita = insertNohRecursivo(raiz->direita, info, fcp);
     }
     else if ( fcp ( info, raiz->info ) <= 0) {
             //para teste
-            printf("\nesquerda");
+            //printf("\nesquerda");
         raiz->esquerda = insertNohRecursivo(raiz->esquerda, info, fcp);
     }
-    else {
-    return raiz;
-    }
+
+    // verificação de propriedade
+    raiz->FB = FBNoh(raiz);
+    //BalancearArvore(raiz);
+return Balance(raiz);
+
 }
 
 void insertNoh ( pDescArvore arvore, void* info, FuncaoComparacao fcp) {
@@ -74,7 +111,7 @@ void imprimeArvoreRecursivo( pNohArvore raiz, FuncaoImpressao fip) {
     if ( raiz != NULL) {
         fip(raiz->info);
 
-        printf(" FB: %d", FBNoh(raiz));
+        printf(" FB: %d", raiz->FB);
     }
 
     if ( raiz->direita != NULL) {
@@ -123,4 +160,46 @@ int FBNoh ( pNohArvore raiz ) {
     }
     else
         return 0;
+}
+
+//-------------------------- Balance ---------------------------------
+
+pNohArvore Balance(pNohArvore raiz) {
+    if ( raiz->FB > 1) {
+        return LeftRotate (raiz);
+    } else if ( raiz->FB < -1 ){
+       return RightRotate(raiz);
+    } else {
+        return raiz;
+    }
+}
+
+pNohArvore RightRotate(pNohArvore raiz) {
+    pNohArvore u = raiz->esquerda;
+
+    if ( u->direita != NULL) {
+        raiz->esquerda = u->direita;
+    } else {
+        raiz->esquerda = NULL;
+    }
+
+    u->direita = raiz;
+    raiz->FB = FBNoh(raiz);
+    u->FB = FBNoh(raiz);
+    return u;
+}
+
+pNohArvore LeftRotate(pNohArvore raiz) {
+    pNohArvore u = raiz->direita;
+
+    if ( u->esquerda != NULL ) {
+    raiz->direita = u->esquerda;
+    } else {
+    raiz->direita = NULL;
+    }
+
+    u->esquerda = raiz;
+    raiz->FB = FBNoh(raiz);
+    u->FB = FBNoh(raiz);
+    return u;
 }
