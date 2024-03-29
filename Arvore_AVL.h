@@ -59,7 +59,24 @@ pNohArvore LeftRotate(pNohArvore raiz);
 
 pNohArvore LeftRotate(pNohArvore raiz);
 
+pNohArvore DoubleRigthRotate(raiz);
+
+pNohArvore DoubleLeftRotate(raiz);
+
+void desenhaArvore(pDescArvore arvore, FuncaoImpressao fip);
+
+void desenhaArvoreRecursivo(pNohArvore raiz, int depth, char* path,int rigth, FuncaoImpressao fip );
+
 // ############################### implementações ###############################
+
+// ------------------------------ free -----------------------------------------------
+void freeNoh(pNohArvore raiz) {
+    free(raiz->esquerda);
+    free(raiz->direita);
+    free(raiz->info);
+    free(raiz);
+}
+
 
 //------------------------------- Instaciar -------------------------------------------
 
@@ -77,7 +94,6 @@ pNohArvore insertNohRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp)
     // Estrutura de inserção
     if (raiz == NULL) {
             //para teste
-            printf("\nincluiu");
         pNohArvore noh = malloc(sizeof(NohArvore));
         noh->info = info;
         noh->FB = 0;
@@ -95,10 +111,8 @@ pNohArvore insertNohRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp)
             //printf("\nesquerda");
         raiz->esquerda = insertNohRecursivo(raiz->esquerda, info, fcp);
     }
-
-    // verificação de propriedade
-    raiz->FB = FBNoh(raiz);
-return Balance(raiz);
+    BalanceFB(raiz);
+    return Balance(raiz);
 
 }
 
@@ -222,20 +236,33 @@ int FBNoh ( pNohArvore raiz ) {
         return 0;
 }
 
+void BalanceFB( pNohArvore raiz) {
+    if ( raiz != NULL)
+        raiz->FB = FBNoh(raiz);
+
+    if ( raiz->direita != NULL) {
+        BalanceFB(raiz->direita);
+    }
+    if ( raiz->esquerda != NULL) {
+        BalanceFB(raiz->esquerda);
+    }
+}
+
+
 //-------------------------- Balance ---------------------------------
 
 pNohArvore Balance(pNohArvore raiz) {
-    if ( raiz->FB == 2 && raiz->direita->FB == -1) { // Rotacao dupla Esquerda
-        raiz->esquerda = LeftRotate(raiz->esquerda);
-        return RightRotate(raiz);
-    } else if(raiz->FB == -2 && raiz->esquerda->FB == 1) { // Rotacao dupla Direita
-        raiz->direita = RightRotate(raiz->direita);
-        return LeftRotate(raiz);
+    BalanceFB(raiz);
+    if ( raiz->FB > 1 && raiz->direita->FB == -1) { // Rotacao dupla Esquerda
+        return DoubleLeftRotate(raiz);
+    } else if(raiz->FB < -1 && raiz->esquerda->FB == 1) { // Rotacao dupla Direita
+        return DoubleRigthRotate(raiz);
     } else if ( raiz->FB > 1 ) { // Rotacao direita
         return LeftRotate (raiz);
     } else if ( raiz->FB < -1 ){ // Rotacao esquerda
        return RightRotate(raiz);
     } else { // esta balanceado
+            BalanceFB(raiz);
         return raiz;
     }
 }
@@ -250,8 +277,8 @@ pNohArvore RightRotate(pNohArvore raiz) {
     }
 
     u->direita = raiz;
-    raiz->FB = FBNoh(raiz);
-    u->FB = FBNoh(raiz);
+
+    BalanceFB(raiz);
     return u;
 }
 
@@ -265,9 +292,57 @@ pNohArvore LeftRotate(pNohArvore raiz) {
     }
 
     u->esquerda = raiz;
-    raiz->FB = FBNoh(raiz);
-    u->FB = FBNoh(raiz);
+
+    BalanceFB(raiz);
     return u;
+}
+
+pNohArvore DoubleRigthRotate(pNohArvore p) {
+    pNohArvore u =  p->esquerda;
+    pNohArvore v = u->direita;
+
+    if ( v->esquerda != NULL)
+        u->direita = v->esquerda;
+    else
+        u->direita = NULL;
+
+    v->esquerda = u;
+    p->esquerda = v;
+
+    if ( v->direita != NULL)
+        p->esquerda = v->direita;
+    else
+        p->esquerda = NULL;
+
+    v->direita = p;
+
+    BalanceFB(v);
+    return v;
+}
+
+pNohArvore DoubleLeftRotate(pNohArvore p) {
+    pNohArvore z = p->direita;
+    pNohArvore y = z->esquerda;
+
+    //Primeira operacao
+    if (y->direita != NULL)
+        z->esquerda = y->direita;
+    else
+        z->esquerda = NULL;
+
+    y->direita = z;
+    p->direita = y;
+
+    //Segunda operacao
+    if ( y->esquerda != NULL)
+        p->direita = y->esquerda;
+    else
+        p->direita = NULL;
+
+    y->direita = p;
+
+    BalanceFB(y);
+    return y;
 }
 
 //-------------------------- FindBy ---------------------------------
@@ -324,4 +399,161 @@ int isLeaf(pNohArvore raiz) {
     }
 }
 
+//--------------------- Remove ---------------------------------------
 
+pNohArvore removeInfoRecursivo(pNohArvore raiz, void* info, FuncaoComparacao fcp){
+    BalanceFB(raiz);
+    //caso a raiz seja nula
+    if (raiz == NULL) {
+            printf("\nNulo\n");
+        return NULL;
+    }
+
+    if ( raiz->esquerda != NULL && fcp(info, raiz->info) < 0 ) {
+        raiz->esquerda = removeInfoRecursivo(raiz->esquerda, info, fcp);
+    }
+    else if ( raiz->direita != NULL && fcp(info, raiz->info ) > 0 ) {
+        raiz->direita = removeInfoRecursivo(raiz->direita, info, fcp);
+    }
+    // Primeiro caso: se o nó encontrado é uma folha
+
+    if (fcp(raiz->info, info) == 0 && isLeaf(raiz) == 1 ) {
+            printaInt(raiz->info);
+                    /*
+                    desc
+                     |
+                      0
+                    /   \
+                  -5     1
+                  / \     \
+                -6  -3     3
+                    / \   /
+                  -4  -1 2
+                       /
+                      -2 <- esse por exemplo
+
+                    */
+        freeNoh(raiz);
+        return NULL;
+    }
+
+    // se o nó nao é folha
+    if ( fcp(raiz->info, info) == 0 && isLeaf(raiz) == 0) {
+            // caso 3: é uma raiz com 2 filhos
+        if ( raiz->direita != NULL && raiz->esquerda != NULL) {
+                /*
+                    desc
+                      |
+                      0 <- esse por exemplo
+                    /   \
+                  -5     1
+                  / \     \
+                -6  -3<PNR 2
+                    / \     \
+                  -4  -1<NR  3
+                       /
+                      -2
+                Neste caso o ideal é procurar o nó mais proximo desta raiz com 2 filhos
+                que por padrao deifinimos que sera o à esquerda e mais a direita
+                possivel neste caso o -1
+                    */
+                        //PNR
+            pNohArvore preNewRoot = raiz->esquerda;
+            pNohArvore newRoot = preNewRoot;
+
+            while (newRoot->direita != NULL) {
+                preNewRoot = newRoot;
+                newRoot = newRoot->direita;
+            }
+
+            if ( newRoot != preNewRoot && newRoot->esquerda != NULL ) {
+                preNewRoot->direita = newRoot->esquerda;
+                newRoot->direita = raiz->direita;
+                newRoot->esquerda = raiz->esquerda;
+            }
+
+            if( newRoot == preNewRoot) {
+                newRoot->direita = raiz->direita;
+            }
+
+
+            //para teste
+            printf("\npreNewRoot: ");
+            printaInt(preNewRoot->info);
+            printf("\nNewRoot: ");
+            printaInt(newRoot->info);
+            printf("\nraiz: ");
+            printaInt(raiz->info);
+            printf("\n");
+
+            raiz->direita = NULL;
+            raiz->esquerda = NULL;
+            free(raiz);
+
+            return newRoot;
+
+        }
+
+        // caso 2: é uma raiz com 1 filho
+        else if (raiz->direita != NULL && raiz->esquerda == NULL) {
+                    /*
+                    desc
+                     |
+                      0
+                    /   \
+                  -5     1
+                  / \     \
+                -6  -3     2 <- esse por exemplo
+                    / \     \
+                  -4  -1     3
+                       /
+                      -2
+
+                    */
+            pNohArvore aux = raiz->direita;
+            raiz->direita = NULL;
+            freeNoh(raiz);
+            return aux;
+
+        }
+
+        // caso 2: é uma raiz com 1 filho
+        else if (raiz->direita == NULL && raiz->esquerda != NULL) {
+                     /*
+                    desc
+                     |
+                      0
+                    /   \
+                  -5     1
+                  / \     \
+                -6  -3     2 - 3
+                    / \
+                  -4  -1 <- esse por exemplo
+                       /
+                      -2
+
+                    */
+            pNohArvore aux = raiz->esquerda;
+            raiz->esquerda = NULL;
+            freeNoh(raiz);
+            return aux;
+        }
+
+        else { printf("ERRO GRAVE!!!!");}
+    }
+
+    BalanceFB(raiz);
+    return raiz;
+}
+
+int removeInfo(pDescArvore arvore, void* info, FuncaoComparacao fcp) {
+    if ( findBy(arvore, info, fcp) == NULL) {
+            printf("oi");
+        return 0;
+    } else {
+        arvore->raiz = removeInfoRecursivo(arvore->raiz, info, fcp);
+        arvore->quantidade--;
+        BalanceFB(arvore->raiz);
+        return 1;
+    }
+}
