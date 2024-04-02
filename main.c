@@ -14,7 +14,7 @@ int main()
 
     printf("\n");
     printf("\n");
-    //printf("Removeu: %d", removeInfo(desc, alocaInt(110), compInt));
+    printf("\nRemoveu: %d", removeInfo(desc, alocaInt(110), compInt));
     printf("\n");
     printf("\n");
     imprimeArvore(desc, printaInt);
